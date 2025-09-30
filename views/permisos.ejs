@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Permisos del Token</title>
+  <style>
+    body { font-family: Arial; padding: 20px; background: #f4f4f4; }
+    .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px #ccc; }
+    pre { background: #eee; padding: 10px; border-radius: 5px; }
+    button { margin-top: 20px; padding: 10px 20px; font-size: 16px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>👤 Información del Usuario</h2>
+    <pre><%= JSON.stringify(permisos, null, 2) %></pre>
+    <a href="/"><button>⬅️ Volver</button></a>
+  </div>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!-- views/token.ejs -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Estado del Token</title>
+  <style>
+    body {
+      font-family: Arial;
+      padding: 20px;
+      background: #f4f4f4;
+    }
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px #ccc;
+      max-width: 600px;
+      margin: auto;
+    }
+    .key {
+      font-weight: bold;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    form {
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>🔐 Token Actual</h2>
+
+    <% if (token && token.access_token) { %>
+      <p><span class="key">Access Token:</span> <%= token.access_token %></p>
+      <p><span class="key">Refresh Token:</span> <%= token.refresh_token %></p>
+      <p><span class="key">Expira en:</span> <%= token.expires_in %> segundos</p>
+      <p><span class="key">User ID:</span> <%= token.user_id %></p>
+
+      <form action="/refresh" method="get">
+        <button type="submit">🔄 Refrescar Token</button>
+      </form>
+
+      <form action="/ver-permisos" method="get">
+        <button type="submit">👁️ Ver Permisos del Token</button>
+      </form>
+    <% } else { %>
+      <p>No hay token disponible. Por favor, autenticá primero.</p>
+    <% } %>
+  </div>
+</body>
+</html>
