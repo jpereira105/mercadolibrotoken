@@ -17,6 +17,7 @@ app.set('views', path.join(__dirname, 'views'));
 // Ruta principal: muestra el estado del token
 app.get('/', (req, res) => {
   const token = getToken();
+  console.log('Token actual:', token); // token disponible ?
   res.render('token', { token });
 });
 
@@ -24,6 +25,8 @@ app.get('/', (req, res) => {
 app.get('/ver-permisos', async (req, res) => {
   try {
     const token = getToken();
+    console.log('Token para permisos:', token); // 👈 Verificás antes de usarlo
+
     const response = await fetch('https://api.mercadolibre.com/users/me', {
       headers: {
         Authorization: `Bearer ${token.access_token}`
@@ -42,6 +45,7 @@ app.get('/ver-permisos', async (req, res) => {
 app.get('/refresh', async (req, res) => {
   try {
     const token = getToken();
+    console.log('Token antes de refrescar:', token);
 
     const response = await fetch('https://api.mercadolibre.com/oauth/token', {
       method: 'POST',
@@ -52,15 +56,66 @@ app.get('/refresh', async (req, res) => {
         client_secret: process.env.CLIENT_SECRET,
         refresh_token: token.refresh_token
       })
-
     });
 
     const nuevoToken = await response.json();
+    console.log('Respuesta del refresh:', nuevoToken);
+
+    // Validación: solo guardar si no hay error
+    if (nuevoToken.error) {
+      console.error('❌ Error en el refresh:', nuevoToken.error);
+      return res.status(400).send('Error al refrescar el token: ' + nuevoToken.message);
+    }
+
     saveToken(nuevoToken);
     res.redirect('/');
   } catch (error) {
     console.error('Error al refrescar el token:', error);
     res.status(500).send('No se pudo refrescar el token');
+  }
+});
+
+// Ruta para recibir el authorization_code y guardar el token
+app.get('/callback', async (req, res) => {
+  const code = req.query.code;
+  if (!code) {
+    return res.status(400).send('No se recibió el authorization code');
+  }
+
+  // Leer el code_verifier guardado previamente
+  const fs = require('fs');
+  const verifierPath = path.join(__dirname, 'code_verifier.txt');
+  if (!fs.existsSync(verifierPath)) {
+    return res.status(500).send('No se encontró el code_verifier');
+  }
+  const code_verifier = fs.readFileSync(verifierPath, 'utf-8');
+
+  try {
+    const response = await fetch('https://api.mercadolibre.com/oauth/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        client_id: process.env.CLIENT_ID,
+        client_secret: process.env.CLIENT_SECRET,
+        code,
+        redirect_uri: process.env.REDIRECT_URI,
+        code_verifier
+      })
+    });
+
+    const token = await response.json();
+    console.log('🔁 Token recibido:', token);
+
+    if (token.error) {
+      return res.status(400).send('Error al intercambiar el código: ' + token.message);
+    }
+
+    saveToken(token);
+    res.send('✅ Token guardado correctamente. Ya podés usar el dashboard.');
+  } catch (error) {
+    console.error('❌ Error en el intercambio:', error);
+    res.status(500).send('Error interno al procesar el token');
   }
 });
 

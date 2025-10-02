@@ -36,6 +36,14 @@
     <h2>🔐 Token Actual</h2>
 
     <% if (token && token.access_token) { %>
+      <p>✅ Token activo</p>
+      <p><strong>Access Token:</strong> <%= token.access_token %></p>
+      <p><strong>Refresh Token:</strong> <%= token.refresh_token %></p>
+    <% } else { %>
+      <p>❌ Token no disponible o inválido</p>
+    <% } %>
+
+    <% if (token && token.access_token) { %>
       <p><span class="key">Access Token:</span> <%= token.access_token %></p>
       <p><span class="key">Refresh Token:</span> <%= token.refresh_token %></p>
       <p><span class="key">Expira en:</span> <%= token.expires_in %> segundos</p>
