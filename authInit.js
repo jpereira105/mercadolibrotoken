@@ -11,13 +11,16 @@ const fs = require('fs');
 const path = require('path');
 const open = require('open');
 
+// Generar code_verifier y code_challenge
 const verifier = crypto.randomBytes(32).toString('base64url');
 const challenge = crypto.createHash('sha256').update(verifier).digest('base64url');
 
-// Guardar el code_verifier
+// Guardar el code_verifier en archivo
 const filePath = path.join(__dirname, 'code_verifier.txt');
 fs.writeFileSync(filePath, verifier);
+console.log('✅ code_verifier guardado en:', filePath);
 
+// Construir URL de autorización
 const clientId = process.env.CLIENT_ID;
 const redirectUri = process.env.REDIRECT_URI;
 
@@ -25,3 +28,4 @@ const authUrl = `https://auth.mercadolibre.com.ar/authorization?response_type=co
 
 console.log('🔑 URL de autorización:', authUrl);
 open(authUrl);
+
