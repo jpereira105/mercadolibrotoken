@@ -128,21 +128,7 @@ app.get('/callback', async (req, res) => {
   }
 });
 
-
-    const token = await response.json();
-    console.log('🔁 Token recibido:', token);
-
-    if (token.error) {
-      return res.status(400).send('Error al intercambiar el código: ' + token.message);
-    }
-
-    saveToken(token);
-    res.send('✅ Token guardado correctamente. Ya podés usar el dashboard.');
-  } catch (error) {
-    console.error('❌ Error en el intercambio:', error);
-    res.status(500).send('Error interno al procesar el token');
-  }
-});
+    
 
 app.get('/privacy', (req, res) => {
   res.send(`
