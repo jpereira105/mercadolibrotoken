@@ -119,6 +119,20 @@ app.get('/callback', async (req, res) => {
   }
 });
 
+app.get('/privacy', (req, res) => {
+  res.send(`
+    <h2>🔒 Política de Privacidad</h2>
+    <p>Esta aplicación utiliza OAuth2 para autenticar usuarios de Mercado Libre. No se almacena información personal sin consentimiento.</p>
+  `);
+});
+
+app.get('/terms', (req, res) => {
+  res.send(`
+    <h2>📜 Términos y Condiciones</h2>
+    <p>El uso de esta app implica la aceptación del flujo de autenticación OAuth2 y la visualización de métricas asociadas al usuario autenticado.</p>
+  `);
+});
+
 // Iniciar servidor
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
