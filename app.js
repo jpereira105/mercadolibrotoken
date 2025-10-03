@@ -2,11 +2,18 @@
 // Mercado Libre para manejar tokens OAuth, 
 // ver permisos y refrescar el token.
 
+// Ventajas de este enfoque
+// No dependés de archivos locales (code_verifier.txt)
+// Todo el flujo funciona desde Render sin intervención manual
+// Podés escalarlo y automatizarlo fácilmente
+
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
-const fetch = require('node-fetch'); // Asegurate de tener node-fetch@2 instalado
+const fs = require('fs');
+const fetch = require('node-fetch'); // node-fetch@2
 const { getToken, saveToken } = require('./tokenStorage');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -17,15 +24,22 @@ app.set('views', path.join(__dirname, 'views'));
 // Ruta principal: muestra el estado del token
 app.get('/', (req, res) => {
   const token = getToken();
-  console.log('Token actual:', token); // token disponible ?
-  res.render('token', { token });
+  res.render('token', {
+    token,
+    error: token ? null : '❌ Token no disponible o inválido. Por favor, autenticá primero.'
+  });
 });
 
 // Ruta para ver permisos del token
 app.get('/ver-permisos', async (req, res) => {
   try {
     const token = getToken();
-    console.log('Token para permisos:', token); // 👈 Verificás antes de usarlo
+    if (!token || !token.access_token) {
+      return res.render('permisos', {
+        permisos: null,
+        error: '❌ Token no disponible. Autenticá primero.'
+      });
+    }
 
     const response = await fetch('https://api.mercadolibre.com/users/me', {
       headers: {
@@ -34,10 +48,20 @@ app.get('/ver-permisos', async (req, res) => {
     });
 
     const permisos = await response.json();
-    res.render('permisos', { permisos });
+    if (permisos.error) {
+      return res.render('permisos', {
+        permisos: null,
+        error: `❌ Error al obtener permisos: ${permisos.message}`
+      });
+    }
+
+    res.render('permisos', { permisos, error: null });
   } catch (error) {
     console.error('Error al obtener permisos:', error);
-    res.status(500).send('No se pudieron obtener los permisos');
+    res.render('permisos', {
+      permisos: null,
+      error: '❌ Error inesperado al consultar permisos'
+    });
   }
 });
 
@@ -45,7 +69,9 @@ app.get('/ver-permisos', async (req, res) => {
 app.get('/refresh', async (req, res) => {
   try {
     const token = getToken();
-    console.log('Token antes de refrescar:', token);
+    if (!token || !token.refresh_token) {
+      return res.status(400).send('❌ No hay refresh_token disponible');
+    }
 
     const response = await fetch('https://api.mercadolibre.com/oauth/token', {
       method: 'POST',
@@ -59,41 +85,27 @@ app.get('/refresh', async (req, res) => {
     });
 
     const nuevoToken = await response.json();
-    console.log('Respuesta del refresh:', nuevoToken);
-
-    // Validación: solo guardar si no hay error
     if (nuevoToken.error) {
-      console.error('❌ Error en el refresh:', nuevoToken.error);
-      return res.status(400).send('Error al refrescar el token: ' + nuevoToken.message);
+      return res.status(400).send('❌ Error al refrescar el token: ' + nuevoToken.message);
     }
 
     saveToken(nuevoToken);
     res.redirect('/');
   } catch (error) {
     console.error('Error al refrescar el token:', error);
-    res.status(500).send('No se pudo refrescar el token');
+    res.status(500).send('❌ No se pudo refrescar el token');
   }
 });
 
 // Ruta para recibir el authorization_code y guardar el token
 app.get('/callback', async (req, res) => {
   const code = req.query.code;
+  const codeVerifier = req.query.state; // Usamos state como code_verifier
 
-  if (!code) {
+  if (!code || !codeVerifier) {
     return res.render('token', {
       token: null,
-      error: '❌ No se recibió el parámetro "code" en la URL'
-    });
-  }
-
-  let codeVerifier;
-  try {
-    const verifierPath = path.join(__dirname, 'code_verifier.txt');
-    codeVerifier = fs.readFileSync(verifierPath, 'utf8');
-  } catch (err) {
-    return res.render('token', {
-      token: null,
-      error: '❌ No se pudo leer el code_verifier. ¿Se generó correctamente?'
+      error: '❌ Falta el code o el code_verifier (state)'
     });
   }
 
@@ -106,30 +118,48 @@ app.get('/callback', async (req, res) => {
   };
 
   try {
-    const response = await axios.post('https://api.mercadolibre.com/oauth/token', payload, {
-      headers: { 'Content-Type': 'application/json' }
+    const response = await fetch('https://api.mercadolibre.com/oauth/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
     });
 
-    const tokenData = response.data;
+    const tokenData = await response.json();
+    if (tokenData.error) {
+      return res.render('token', {
+        token: null,
+        error: `❌ Error al obtener el token: ${tokenData.message}`
+      });
+    }
 
-    // Opcional: guardar token en archivo
-    fs.writeFileSync(path.join(__dirname, 'token.json'), JSON.stringify(tokenData, null, 2));
-
-    res.render('token', {
-      token: tokenData,
-      error: null
-    });
+    saveToken(tokenData);
+    res.render('token', { token: tokenData, error: null });
   } catch (error) {
-    const msg = error.response?.data?.message || error.message || 'Error desconocido';
+    console.error('Error en /callback:', error);
     res.render('token', {
       token: null,
-      error: `❌ Error al obtener el token: ${msg}`
+      error: '❌ Error inesperado al obtener el token'
     });
   }
 });
 
-    
+// Dashboard visual
+app.get('/dashboard', (req, res) => {
+  const token = getToken();
+  const scraping = {
+    lastRun: '2025-10-03 14:22',
+    items: 128,
+    errors: 2
+  };
+  const system = {
+    mode: 'Producción',
+    autonomy: true
+  };
 
+  res.render('dashboard', { token, scraping, system });
+});
+
+// Rutas informativas
 app.get('/privacy', (req, res) => {
   res.send(`
     <h2>🔒 Política de Privacidad</h2>
@@ -146,5 +176,5 @@ app.get('/terms', (req, res) => {
 
 // Iniciar servidor
 app.listen(PORT, () => {
-  console.log(`Servidor corriendo en http://localhost:${PORT}`);
+  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
 });

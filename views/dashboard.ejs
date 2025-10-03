@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dashboard de Monitoreo</title>
+  <style>
+    body { font-family: Arial; background: #f4f4f4; padding: 20px; }
+    .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px #ccc; margin-bottom: 20px; }
+    .ok { color: green; }
+    .warn { color: orange; }
+    .error { color: red; }
+    button { padding: 10px 20px; margin-right: 10px; }
+  </style>
+</head>
+<body>
+  <h2>📊 Dashboard Operativo</h2>
+
+  <div class="card">
+    <h3>🔐 Token</h3>
+    <% if (token) { %>
+      <p class="ok">✅ Token activo</p>
+      <p><strong>Access Token:</strong> <%= token.access_token %></p>
+      <p><strong>Expira en:</strong> <%= token.expires_in %> segundos</p>
+      <% if (token.expires_in < 300) { %>
+        <p class="warn">⚠️ El token está por expirar</p>
+      <% } %>
+    <% } else { %>
+      <p class="error">❌ Token no disponible</p>
+    <% } %>
+    <form action="/refresh" method="get">
+      <button type="submit">🔄 Refrescar Token</button>
+    </form>
+    <form action="/ver-permisos" method="get">
+      <button type="submit">👁️ Ver Permisos</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h3>📦 Scraping</h3>
+    <p><strong>Última ejecución:</strong> <%= scraping.lastRun %></p>
+    <p><strong>Items extraídos:</strong> <%= scraping.items %></p>
+    <p><strong>Errores:</strong> <%= scraping.errors %></p>
+  </div>
+
+  <div class="card">
+    <h3>🧠 Estado del Sistema</h3>
+    <p><strong>Modo:</strong> <%= system.mode %></p>
+    <p><strong>Autonomía:</strong> <%= system.autonomy ? '🟢 Activa' : '🔴 Manual' %></p>
+  </div>
+</body>
+</html>
+

@@ -1,19 +1,32 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Permisos del Token</title>
+  <title>Permisos del Usuario</title>
   <style>
     body { font-family: Arial; padding: 20px; background: #f4f4f4; }
-    .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px #ccc; }
-    pre { background: #eee; padding: 10px; border-radius: 5px; }
-    button { margin-top: 20px; padding: 10px 20px; font-size: 16px; }
+    .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px #ccc; max-width: 600px; margin: auto; }
+    .error { color: red; }
+    .ok { color: green; }
+    pre { background: #eee; padding: 10px; border-radius: 4px; }
   </style>
 </head>
 <body>
   <div class="card">
-    <h2>👤 Información del Usuario</h2>
-    <pre><%= JSON.stringify(permisos, null, 2) %></pre>
-    <a href="/"><button>⬅️ Volver</button></a>
+    <h2>👤 Datos del Usuario Autenticado</h2>
+
+    <% if (error) { %>
+      <p class="error"><%= error %></p>
+    <% } else if (permisos) { %>
+      <p class="ok">✅ Permisos obtenidos correctamente</p>
+      <p><strong>ID:</strong> <%= permisos.id %></p>
+      <p><strong>Nickname:</strong> <%= permisos.nickname %></p>
+      <p><strong>Email:</strong> <%= permisos.email %></p>
+      <p><strong>Tipo de Usuario:</strong> <%= permisos.user_type %></p>
+      <p><strong>Permisos completos:</strong></p>
+      <pre><%= JSON.stringify(permisos, null, 2) %></pre>
+    <% } else { %>
+      <p class="error">❌ No se pudieron obtener los permisos</p>
+    <% } %>
   </div>
 </body>
 </html>
