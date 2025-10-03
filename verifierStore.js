@@ -1,4 +1,4 @@
-llet verifier = null;
+let verifier = null;
 
 function setVerifier(v) {
   verifier = v;
