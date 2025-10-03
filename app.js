@@ -78,31 +78,56 @@ app.get('/refresh', async (req, res) => {
 // Ruta para recibir el authorization_code y guardar el token
 app.get('/callback', async (req, res) => {
   const code = req.query.code;
+
   if (!code) {
-    return res.status(400).send('No se recibió el authorization code');
+    return res.render('token', {
+      token: null,
+      error: '❌ No se recibió el parámetro "code" en la URL'
+    });
   }
 
-  // Leer el code_verifier guardado previamente
-  const fs = require('fs');
-  const verifierPath = path.join(__dirname, 'code_verifier.txt');
-  if (!fs.existsSync(verifierPath)) {
-    return res.status(500).send('No se encontró el code_verifier');
+  let codeVerifier;
+  try {
+    const verifierPath = path.join(__dirname, 'code_verifier.txt');
+    codeVerifier = fs.readFileSync(verifierPath, 'utf8');
+  } catch (err) {
+    return res.render('token', {
+      token: null,
+      error: '❌ No se pudo leer el code_verifier. ¿Se generó correctamente?'
+    });
   }
-  const code_verifier = fs.readFileSync(verifierPath, 'utf-8');
+
+  const payload = {
+    grant_type: 'authorization_code',
+    client_id: process.env.CLIENT_ID,
+    code,
+    redirect_uri: process.env.REDIRECT_URI,
+    code_verifier: codeVerifier
+  };
 
   try {
-    const response = await fetch('https://api.mercadolibre.com/oauth/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        grant_type: 'authorization_code',
-        client_id: process.env.CLIENT_ID,
-        client_secret: process.env.CLIENT_SECRET,
-        code,
-        redirect_uri: process.env.REDIRECT_URI,
-        code_verifier
-      })
+    const response = await axios.post('https://api.mercadolibre.com/oauth/token', payload, {
+      headers: { 'Content-Type': 'application/json' }
     });
+
+    const tokenData = response.data;
+
+    // Opcional: guardar token en archivo
+    fs.writeFileSync(path.join(__dirname, 'token.json'), JSON.stringify(tokenData, null, 2));
+
+    res.render('token', {
+      token: tokenData,
+      error: null
+    });
+  } catch (error) {
+    const msg = error.response?.data?.message || error.message || 'Error desconocido';
+    res.render('token', {
+      token: null,
+      error: `❌ Error al obtener el token: ${msg}`
+    });
+  }
+});
+
 
     const token = await response.json();
     console.log('🔁 Token recibido:', token);
