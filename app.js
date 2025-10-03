@@ -100,12 +100,12 @@ app.get('/refresh', async (req, res) => {
 // Ruta para recibir el authorization_code y guardar el token
 app.get('/callback', async (req, res) => {
   const code = req.query.code;
-  const codeVerifier = req.query.state; // Usamos state como code_verifier
+  const codeVerifier = getVerifier(); // recuperamos desde memoria
 
   if (!code || !codeVerifier) {
     return res.render('token', {
       token: null,
-      error: '❌ Falta el code o el code_verifier (state)'
+      error: '❌ No se recibió el code o el code_verifier está ausente'
     });
   }
 
@@ -125,6 +125,7 @@ app.get('/callback', async (req, res) => {
     });
 
     const tokenData = await response.json();
+
     if (tokenData.error) {
       return res.render('token', {
         token: null,
@@ -135,13 +136,28 @@ app.get('/callback', async (req, res) => {
     saveToken(tokenData);
     res.render('token', { token: tokenData, error: null });
   } catch (error) {
-    console.error('Error en /callback:', error);
     res.render('token', {
       token: null,
       error: '❌ Error inesperado al obtener el token'
     });
   }
 });
+
+
+const crypto = require('crypto');
+const { setVerifier, getVerifier } = require('./verifierStore');
+
+app.get('/login', (req, res) => {
+  const codeVerifier = crypto.randomBytes(32).toString('base64url');
+  const codeChallenge = crypto.createHash('sha256').update(codeVerifier).digest('base64url');
+
+  setVerifier(codeVerifier); // guardamos en memoria
+
+  const authUrl = `https://auth.mercadolibre.com.ar/authorization?response_type=code&client_id=${process.env.CLIENT_ID}&redirect_uri=${process.env.REDIRECT_URI}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
+
+  res.redirect(authUrl); // redirige al login
+});
+
 
 // Dashboard visual
 app.get('/dashboard', (req, res) => {

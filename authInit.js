@@ -11,6 +11,7 @@ require('dotenv').config();
 // Generar code_verifier y code_challenge
 const verifier = crypto.randomBytes(32).toString('base64url');
 const challenge = crypto.createHash('sha256').update(verifier).digest('base64url');
+const codeVerifier = req.query.state;
 
 // Construir URL con code_challenge y state
 const clientId = process.env.CLIENT_ID;

@@ -1,3 +1,4 @@
 .env
+token.json
+code_verifier.txt
 node_modules/
-token.jason
