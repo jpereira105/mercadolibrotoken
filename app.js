@@ -103,6 +103,10 @@ app.get('/callback', async (req, res) => {
   const code = req.query.code;
   const codeVerifier = getVerifier(); // recuperamos desde memoria
 
+  // 🔍 Logs para depuración
+  console.log('🔁 Código recibido:', code);
+  console.log('🔐 Code Verifier usado:', codeVerifier);
+
   if (!code || !codeVerifier) {
     return res.render('token', {
       token: null,
