@@ -148,19 +148,17 @@ app.get('/callback', async (req, res) => {
   }
 });
 
-const { setVerifier, getVerifier } = require('./verifier');
-
+const { generateVerifier, generateChallenge } = require('./verifier');
 
 app.get('/login', (req, res) => {
-  const codeVerifier = crypto.randomBytes(32).toString('base64url');
-  const codeChallenge = crypto.createHash('sha256').update(codeVerifier).digest('base64url');
-
-  setVerifier(codeVerifier); // guardamos en memoria
+  const codeVerifier = generateVerifier(); // genera y guarda internamente
+  const codeChallenge = generateChallenge(); // calcula desde el verifier guardado
 
   const authUrl = `https://auth.mercadolibre.com.ar/authorization?response_type=code&client_id=${process.env.CLIENT_ID}&redirect_uri=${process.env.REDIRECT_URI}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
 
-  res.redirect(authUrl); // redirige al login
+  res.redirect(authUrl);
 });
+
 
 
 // Dashboard visual
