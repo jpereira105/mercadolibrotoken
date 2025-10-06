@@ -1,0 +1,12 @@
+mercadolibretoken/
+├── app.js                  # Núcleo de la app Express
+├── verifier.js             # Generación y almacenamiento del code_verifier
+├── tokenStorage.js         # Persistencia del token en disco
+├── views/
+│   ├── token.ejs           # Vista principal del token
+│   ├── permisos.ejs        # Vista de permisos del usuario
+│   └── dashboard.ejs       # Panel visual del sistema
+├── public/                 # Archivos estáticos (CSS, JS, imágenes)
+├── .env                    # Variables de entorno (CLIENT_ID, REDIRECT_URI, etc.)
+├── package.json            # Dependencias y scripts
+

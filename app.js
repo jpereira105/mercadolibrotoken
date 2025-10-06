@@ -9,6 +9,7 @@
 
 require('dotenv').config();
 const express = require('express');
+const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
 const fetch = require('node-fetch'); // node-fetch@2
@@ -145,7 +146,8 @@ app.get('/callback', async (req, res) => {
 
 
 const crypto = require('crypto');
-const { setVerifier, getVerifier } = require('./verifierStore');
+const { setVerifier, getVerifier } = require('./verifier');
+
 
 app.get('/login', (req, res) => {
   const codeVerifier = crypto.randomBytes(32).toString('base64url');
