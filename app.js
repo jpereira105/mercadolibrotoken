@@ -9,9 +9,9 @@
 
 require('dotenv').config();
 const express = require('express');
-const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const fetch = require('node-fetch'); // node-fetch@2
 const { getToken, saveToken } = require('./tokenStorage');
 
@@ -144,8 +144,6 @@ app.get('/callback', async (req, res) => {
   }
 });
 
-
-const crypto = require('crypto');
 const { setVerifier, getVerifier } = require('./verifier');
 
 
