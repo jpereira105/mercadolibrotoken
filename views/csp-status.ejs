@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>🔍 Estado CSP</title>
+  <link rel="stylesheet" href="/css/style.css"> <!-- ✅ Acá va -->
+  <style>
+    body { font-family: sans-serif; padding: 2rem; }
+    .status { font-size: 1.5rem; margin-bottom: 1rem; }
+    .ok { color: green; }
+    .partial { color: orange; }
+    .missing { color: red; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <h2>🔐 Estado de Content-Security-Policy</h2>
+  <div class="status <%= status %>">
+    <% if (status === 'ok') { %>
+      🟢 CSP activa y válida
+    <% } else if (status === 'partial') { %>
+      🟡 CSP presente pero incompleta
+    <% } else { %>
+      🔴 CSP ausente
+    <% } %>
+  </div>
+
+  <h3>📋 Header CSP recibido:</h3>
+  <pre><%= cspHeader || 'No se recibió ningún header CSP' %></pre>
+
+  <h3>🔎 Validación por directiva:</h3>
+<table border="1" cellpadding="6" cellspacing="0" style="margin-top: 1rem;">
+  <tr>
+    <th>Directiva</th>
+    <th>Valor</th>
+    <th>Estado</th>
+  </tr>
+  <% for (let dir in estadoDirectivas) { %>
+    <tr>
+      <td><%= dir %></td>
+      <td><%= estadoDirectivas[dir] || '❌ No definida' %></td>
+      <td>
+        <% if (estadoDirectivas[dir]) { %>
+          <span style="color: green;">🟢 OK</span>
+        <% } else { %>
+          <span style="color: red;">🔴 Faltante</span>
+        <% } %>
+      </td>
+    </tr>
+  <% } %>
+</table>
+
+<h3>🛠️ Sugerencias:</h3>
+<ul>
+  <% if (!estadoDirectivas['script-src']) { %>
+    <li>⚠️ Falta <code>script-src</code>. Podés agregar: <code>script-src 'self'</code></li>
+  <% } %>
+  <% if (estadoDirectivas['style-src'] && estadoDirectivas['style-src'].includes("'unsafe-inline'")) { %>
+    <li>⚠️ Estás usando <code>'unsafe-inline'</code> en <code>style-src</code>. Considerá eliminarlo por seguridad.</li>
+  <% } %>
+</ul>
+
+<!-- Panel visual de errores CSP -->
+<h3>📉 Recursos bloqueados por CSP:</h3>
+<ul id="csp-log"></ul>
+
+<!-- Script inline que será bloqueado por CSP -->
+<script>alert('Esto debería ser bloqueado');</script>
+
+<!-- Script que captura el evento de bloqueo -->
+<script src="/js/csp-debug.js"></script>
+
+
+</body>
+</html>
+

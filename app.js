@@ -14,13 +14,62 @@ const fs = require('fs');
 const crypto = require('crypto');
 const fetch = require('node-fetch'); // node-fetch@2
 const { getToken, saveToken } = require('./tokenStorage');
-
 const app = express();
+const { analizarCSP } = require('./utils/csp'); // ✅ Importar helper
 const PORT = process.env.PORT || 3000;
+const session = require('express-session');
+
+// ✅ Agregá el middleware de CSP acá
+//app.use((req, res, next) => {
+//  res.setHeader("Content-Security-Policy",
+//    "default-src 'self'; style-src 'self' https://www.gstatic.com;");
+//  next();
+//});
+
+app.use(session({
+  secret: 'tu_clave_secreta',
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false } // ⚠️ Usá true si tenés HTTPS
+}));
+
+app.use(express.static(path.join(__dirname, 'public')));
+
+// ✅ Ruta para debug de CSP
+app.get('/csp-debug', (req, res) => {
+  const headers = req.headers;
+  res.render('csp-debug', { headers });
+});
+
+app.get('/response-headers', (req, res) => {
+  const responseHeaders = res.getHeaders();
+  res.render('response-headers', { responseHeaders });
+});
 
 // Configurar EJS
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+
+// ✅ Paso 2: Ruta que usa el helper
+
+app.get('/csp-status', (req, res) => {
+  //const cspHeader = "default-src 'self'; style-src 'self'; script-src 'none'; img-src 'self' data:; font-src 'self'";
+  const cspHeader = "default-src 'self'; style-src 'self'; script-src 'none'; img-src 'self' data:; font-src 'self'";
+  res.setHeader('Content-Security-Policy', cspHeader);
+
+  const estadoDirectivas = analizarCSP(cspHeader);
+
+  // 🔧 Calcular estado general
+  let status = 'missing';
+  if (cspHeader) {
+    const definidas = Object.values(estadoDirectivas).filter(Boolean).length;
+    const total = Object.keys(estadoDirectivas).length;
+    status = definidas === total ? 'ok' : 'partial';
+  }
+
+  res.render('csp-status', { cspHeader, estadoDirectivas, status });
+});
+
 
 // Ruta principal: muestra el estado del token
 app.get('/', (req, res) => {
@@ -101,47 +150,43 @@ app.get('/refresh', async (req, res) => {
 // Ruta para recibir el authorization_code y guardar el token
 app.get('/callback', async (req, res) => {
   const code = req.query.code;
-  const codeVerifier = getVerifier(); // recuperamos desde memoria
+  const codeVerifier = req.session.code_verifier;
+  console.log('🔁 Verifier recuperado:', codeVerifier);
 
-  // 🔍 Logs para depuración
-  console.log('🔁 Código recibido:', code);
-  console.log('🔐 Code Verifier usado:', codeVerifier);
-
-  if (!code || !codeVerifier) {
-    return res.render('token', {
-      token: null,
-      error: '❌ No se recibió el code o el code_verifier está ausente'
-    });
-  }
-
-  const payload = {
-    grant_type: 'authorization_code',
-    client_id: process.env.CLIENT_ID,
-    code,
-    redirect_uri: process.env.REDIRECT_URI,
-    code_verifier: codeVerifier
-  };
+  const formData = new URLSearchParams();
+  formData.append('grant_type', 'authorization_code');
+  formData.append('client_id', process.env.CLIENT_ID);
+  formData.append('code', code);
+  formData.append('redirect_uri', process.env.REDIRECT_URI);
+  formData.append('code_verifier', codeVerifier);
 
   try {
     const response = await fetch('https://api.mercadolibre.com/oauth/token', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: formData
     });
 
     const tokenData = await response.json();
 
-    if (tokenData.error) {
-      return res.render('token', {
-        token: null,
-        error: `❌ Error al obtener el token: ${tokenData.message}`
-      });
-    }
+    res.render('debug', {
+      code,
+      codeVerifier,
+      status: response.status,
+      token: tokenData,
+      error: tokenData.error ? tokenData.error_description || tokenData.message : null,
+      logs: {
+        codeLog: `🔁 Código recibido: ${code}`,
+        verifierLog: `🔐 Verifier usado: ${codeVerifier}`,
+        statusLog: `📡 Status HTTP: ${response.status}`
+      }
+    });
 
-    saveToken(tokenData);
-    res.render('token', { token: tokenData, error: null });
-  } catch (error) {
-    res.render('token', {
+  } catch (err) {
+    res.render('debug', {
+      code,
+      codeVerifier,
+      status: 500,
       token: null,
       error: '❌ Error inesperado al obtener el token'
     });
@@ -151,14 +196,16 @@ app.get('/callback', async (req, res) => {
 const { generateVerifier, generateChallenge } = require('./verifier');
 
 app.get('/login', (req, res) => {
-  const codeVerifier = generateVerifier(); // genera y guarda internamente
-  const codeChallenge = generateChallenge(); // calcula desde el verifier guardado
+  const codeVerifier = generateVerifier();
+  req.session.code_verifier = codeVerifier;
 
+  console.log('🔐 Verifier guardado:', req.session.code_verifier);
+
+  const codeChallenge = generateChallenge(codeVerifier); // pasalo como parámetro
   const authUrl = `https://auth.mercadolibre.com.ar/authorization?response_type=code&client_id=${process.env.CLIENT_ID}&redirect_uri=${process.env.REDIRECT_URI}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
 
   res.redirect(authUrl);
 });
-
 
 
 // Dashboard visual

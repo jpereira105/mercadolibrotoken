@@ -1,12 +1,15 @@
-mercadolibretoken/
-├── app.js                  # Núcleo de la app Express
-├── verifier.js             # Generación y almacenamiento del code_verifier
-├── tokenStorage.js         # Persistencia del token en disco
-├── views/
-│   ├── token.ejs           # Vista principal del token
-│   ├── permisos.ejs        # Vista de permisos del usuario
-│   └── dashboard.ejs       # Panel visual del sistema
-├── public/                 # Archivos estáticos (CSS, JS, imágenes)
-├── .env                    # Variables de entorno (CLIENT_ID, REDIRECT_URI, etc.)
-├── package.json            # Dependencias y scripts
+routes/
+│   └── csp.js (opcional si separás rutas)
+
+
+Carpeta	Propósito
+utils/	Helpers reutilizables, funciones de lógica como analizarCSP()
+routes/	Definición de rutas Express (/csp-status, /login, etc.)
+views/	Vistas EJS que renderizan la interfaz
+public/	Archivos estáticos (CSS, JS, imágenes)
+
+
+Carpeta	Archivo	Rol específico
+utils/	csp.js	Contiene helpers como analizarCSP()
+routes/	csp.js	Define rutas como /csp-status y usa los helpers
 
