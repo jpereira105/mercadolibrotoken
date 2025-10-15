@@ -13,6 +13,27 @@
 <body>
   <h2>🔍 Debug OAuth2</h2>
 
+  <ul>
+  <li><strong>Entorno:</strong> <%= process.env.NODE_ENV %></li>
+  <li><strong>Client ID:</strong> <%= process.env.CLIENT_ID %></li>
+  <li><strong>Client Secret:</strong> <%= process.env.CLIENT_SECRET ? '✅ Cargado' : '❌ Faltante' %></li>
+  <li><strong>Código recibido:</strong> <%= code || '❌ No recibido' %></li>
+  <li><strong>Verifier usado:</strong> <%= codeVerifier || '❌ No disponible' %></li>
+  <li><strong>Status HTTP:</strong> <%= status %></li>
+  <li><strong>Token recibido:</strong> <%= token && token.access_token ? '✅ OK' : '❌ No recibido' %></li>
+  <li><strong>State recibido:</strong> <%= state || '❌ No recibido' %></li>
+  <li><strong>State esperado:</strong> <%= expectedState || '❌ No disponible' %></li>
+  <li><strong>State recibido:</strong> <%= state || '❌ No recibido' %></li>
+  <li><strong>State esperado:</strong> <%= expectedState || '❌ No disponible' %></li>
+  <li><strong>Tiempo de respuesta:</strong> <%= responseTime ? responseTime + ' ms' : '❌ No medido' %></li>
+  <li><strong>Redirect URI usada:</strong> <%= redirectUri %></li>
+    
+</ul>
+
+<% if (error) { %>
+  <p style="color: red;"><strong>Error:</strong> <%= error %></p>
+<% } %>
+
   <p><strong>Código recibido:</strong> <%= code %></p>
   <p><strong>Code Verifier:</strong> <%= codeVerifier %></p>
   <p><strong>Status HTTP:</strong> <%= status %></p>
@@ -22,6 +43,8 @@
         <li><%= logs.codeLog %></li>
         <li><%= logs.verifierLog %></li>
         <li><%= logs.statusLog %></li>
+        <li><%= logs.stateLog %></li>
+        <li><%= logs.timeLog %></li>
     </ul>  
 
   <% if (error) { %>

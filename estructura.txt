@@ -13,3 +13,16 @@ Carpeta	Archivo	Rol específico
 utils/	csp.js	Contiene helpers como analizarCSP()
 routes/	csp.js	Define rutas como /csp-status y usa los helpers
 
+/app   14/10/2025
+/app
+├── app.js
+├── helpers/
+│   ├── analyzeCSP.js
+│   └── verifier.js
+├── views/
+│   ├── csp-status.ejs
+│   ├── token.ejs
+│   ├── permisos.ejs
+│   ├── debug.ejs
+│   └── dashboard.ejs
+└── .env

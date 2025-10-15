@@ -33,28 +33,36 @@
     <th>Directiva</th>
     <th>Valor</th>
     <th>Estado</th>
+    <th>Sugerencia</th>
   </tr>
   <% for (let dir in estadoDirectivas) { %>
-    <tr>
-      <td><%= dir %></td>
-      <td><%= estadoDirectivas[dir] || '❌ No definida' %></td>
-      <td>
-        <% if (estadoDirectivas[dir]) { %>
-          <span style="color: green;">🟢 OK</span>
-        <% } else { %>
-          <span style="color: red;">🔴 Faltante</span>
-        <% } %>
-      </td>
-    </tr>
+  <tr>
+    <td><%= dir %></td>
+    <td><%= estadoDirectivas[dir].valor || '❌ No definida' %></td>
+    <td>
+      <% const estado = estadoDirectivas[dir].estado; %>
+      <% if (estado === 'ok-data') { %>
+        <span style="color: green;">🟢 (data:)</span>
+      <% } else if (estado === 'warning') { %>
+        <span style="color: orange;">🟡 Riesgo</span>
+      <% } else if (estado === 'missing') { %>
+        <span style="color: red;">🔴 Faltante</span>
+      <% } else { %>
+        <span style="color: gray;">⚪ Desconocido</span>
+      <% } %>
+    </td>
+    <td><%= estadoDirectivas[dir].sugerencia || '-' %></td>
+  </tr>
   <% } %>
 </table>
+
 
 <h3>🛠️ Sugerencias:</h3>
 <ul>
   <% if (!estadoDirectivas['script-src']) { %>
     <li>⚠️ Falta <code>script-src</code>. Podés agregar: <code>script-src 'self'</code></li>
   <% } %>
-  <% if (estadoDirectivas['style-src'] && estadoDirectivas['style-src'].includes("'unsafe-inline'")) { %>
+  <% if (estadoDirectivas['style-src'] && estadoDirectivas['style-src'].valor.includes("'unsafe-inline'")) { %>
     <li>⚠️ Estás usando <code>'unsafe-inline'</code> en <code>style-src</code>. Considerá eliminarlo por seguridad.</li>
   <% } %>
 </ul>
