@@ -1,10 +1,5 @@
-// produccion o local REDIRECT_URI 
+// produccion render
 
 function getRedirectUri() {
-  const isProduction = process.env.NODE_ENV === 'production';
-  return isProduction
-    ? 'https://justo-scraper.onrender.com/callback'
-    : 'http://localhost:3000/callback';
+  return process.env.REDIRECT_URI || 'https://justo-scraper.onrender.com/callback';
 }
-
-module.exports = { getRedirectUri };
