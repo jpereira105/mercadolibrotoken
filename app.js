@@ -284,6 +284,7 @@ app.get('/terms', (req, res) => {
   `);
 });
 
+
 app.get('/api/token', async (req, res) => {
   try {
     const token = getToken();
