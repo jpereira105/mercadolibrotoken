@@ -197,6 +197,7 @@ app.get('/callback', async (req, res) => {
 
     const responseTime = Date.now() - startTime; // ⏱️ Fin del cronómetro
     const tokenData = await response.json();
+    saveToken(tokenData);
 
     res.render('debug', {
       code,
