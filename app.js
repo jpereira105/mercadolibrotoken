@@ -204,6 +204,7 @@ app.get('/callback', async (req, res) => {
       state: receivedState,
       expectedState,
       redirectUri,
+      responseTime, // 👈 esto es clave
       status: response.status,
       token: tokenData,
       error: tokenData.error ? tokenData.error_description || tokenData.message : null,
@@ -213,8 +214,9 @@ app.get('/callback', async (req, res) => {
         stateLog: `🧾 State recibido: ${receivedState} (esperado: ${expectedState})`,
         statusLog: `📡 Status HTTP: ${response.status}`,
         timeLog: `⏱️ Tiempo de respuesta: ${responseTime} ms`
-      }
-    });
+  }
+});
+
 
   } catch (err) {
     console.error('❌ Error en /callback:', err); // 👈 esto te muestra el error real
