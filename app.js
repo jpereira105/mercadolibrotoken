@@ -284,6 +284,21 @@ app.get('/terms', (req, res) => {
   `);
 });
 
+app.get('/api/token', async (req, res) => {
+  try {
+    const token = getToken();
+    if (!token || !token.access_token) {
+      return res.status(404).json({ error: '❌ Token no disponible' });
+    }
+    res.json({ token: token.access_token });
+  } catch (err) {
+    console.error('❌ Error en /api/token:', err);
+    res.status(500).json({ error: '❌ No se pudo obtener el token' });
+  }
+});
+
+
+
 // Iniciar servidor
 app.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
