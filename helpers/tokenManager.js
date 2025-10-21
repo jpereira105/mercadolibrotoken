@@ -3,26 +3,25 @@
 // obtener el token (si no existe o está vencido)
 // guardarlo en memoria o archivo temporal
 // devolverlo a quien lo necesite
+// Exponer el módulo como endpoint
 
-const { solicitarTokenOAuth2 } = require('./oauthRequester');
+// routes/tokenRoute.js
+const express = require('express');
+const router = express.Router();
+const { getToken } = require('../helpers/tokenManager');
 
-let cachedToken = null;
-let expiresAt = null;
+router.get('/token', async (req, res) => {
+  const apiKey = req.headers['x-api-key'];
+  if (apiKey !== process.env.API_KEY) {
+    return res.status(403).json({ error: 'API_KEY inválida' });
+  }
 
-function isTokenValid() {
-  return cachedToken && Date.now() < expiresAt;
-}
+  try {
+    const token = await getToken();
+    res.json({ token });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al obtener token' });
+  }
+});
 
-async function fetchToken() {
-  const tokenData = await solicitarTokenOAuth2();
-  cachedToken = tokenData.token_de_acceso;
-  expiresAt = Date.now() + tokenData.caduca_en * 1000;
-  return cachedToken;
-}
-
-async function getToken() {
-  if (isTokenValid()) return cachedToken;
-  return await fetchToken();
-}
-
-module.exports = { getToken };
+module.exports = router;

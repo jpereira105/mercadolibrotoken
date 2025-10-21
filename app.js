@@ -23,14 +23,7 @@ const axios = require('axios');
 const { generateVerifier, generateChallenge } = require('./helpers/pkceUtils');
 
 
-// ✅ Agregá el middleware de CSP acá
-//app.use((req, res, next) => {
-//  res.setHeader("Content-Security-Policy",
-//    "default-src 'self'; style-src 'self' https://www.gstatic.com;");
-//  next();
-//});
 
-// const sessionSecret = crypto.randomBytes(64).toString('hex');
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -286,7 +279,15 @@ app.get('/terms', (req, res) => {
 });
 
 
+// validación de API_KEY en tu endpoint existente
+// versión protegida
+
 app.get('/api/token', async (req, res) => {
+  const apiKey = req.headers['x-api-key'];
+  if (apiKey !== process.env.API_KEY) {
+    return res.status(403).json({ error: '❌ API_KEY inválida' });
+  }
+
   try {
     const token = getToken();
     if (!token || !token.access_token) {
@@ -298,7 +299,6 @@ app.get('/api/token', async (req, res) => {
     res.status(500).json({ error: '❌ No se pudo obtener el token' });
   }
 });
-
 
 
 // Iniciar servidor
