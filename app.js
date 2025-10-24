@@ -190,8 +190,13 @@ app.get('/callback', async (req, res) => {
 
     const responseTime = Date.now() - startTime; // ⏱️ Fin del cronómetro
     const tokenData = await response.json();
-    saveToken(tokenData);
+    // ⏱️ Calculamos el tiempo de expiración absoluto
+    const expires_in = tokenData.expires_in * 1000;
+    tokenData.expires_at = Date.now() + expires_in;
 
+    // 💾 Guardamos el token con expires_at incluido
+    saveToken(tokenData);
+   
     res.render('debug', {
       code,
       codeVerifier,
