@@ -307,6 +307,30 @@ app.get('/api/token', async (req, res) => {
   }
 });
 
+app.get('/api/token/status', async (req, res) => {
+  const token = await getToken();
+  if (!token || !token.access_token || !token.expires_at) {
+    return res.json({
+      estado: 'no_disponible',
+      tiempo_restante: 0,
+      scopes: [],
+      usuario: null
+    });
+  }
+
+  const tiempo_restante = token.expires_at - Date.now();
+  let estado = 'valido';
+  if (tiempo_restante < 60 * 1000) estado = 'por_expirar';
+  if (tiempo_restante <= 0) estado = 'expirado';
+
+  res.json({
+    estado,
+    tiempo_restante,
+    scopes: token.scope?.split(' ') ?? [],
+    usuario: token.user_id ?? null
+  });
+});
+
 
 // Iniciar servidor
 app.listen(PORT, () => {
