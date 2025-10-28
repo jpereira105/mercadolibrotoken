@@ -285,7 +285,7 @@ app.get('/terms', (req, res) => {
 
 
 // validación de API_KEY en tu endpoint existente
-// versión protegida
+// versión protegida ENDPOINT
 
 app.get('/api/token', async (req, res) => {
   console.log('🔐 Request recibido en /api/token');
@@ -323,7 +323,8 @@ app.get('/api/token/status', async (req, res) => {
     });
   }
 
-  const tiempo_restante = token.expires_at - Date.now();
+  const tiempo_restante = new Date(token.expires_at).getTime() - Date.now();
+
   let estado = 'valido';
   if (tiempo_restante < 60 * 1000) estado = 'por_expirar';
   if (tiempo_restante <= 0) estado = 'expirado';
