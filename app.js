@@ -190,6 +190,10 @@ app.get('/callback', async (req, res) => {
 
     const responseTime = Date.now() - startTime; // ⏱️ Fin del cronómetro
     const tokenData = await response.json();
+
+    tokenData.expires_at = Date.now() + tokenData.expires_in * 1000;
+    saveToken(tokenData);
+
     // ⏱️ Calculamos el tiempo de expiración absoluto
     const expires_in = tokenData.expires_in * 1000;
     tokenData.expires_at = Date.now() + expires_in;
@@ -314,6 +318,7 @@ app.get('/api/token', async (req, res) => {
 
 app.get('/api/token/status', async (req, res) => {
   const token = await getToken();
+  console.log('📦 Token en /status:', token);
   if (!token || !token.access_token || !token.expires_at) {
     return res.json({
       estado: 'no_disponible',
