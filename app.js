@@ -300,7 +300,7 @@ app.get('/api/token', async (req, res) => {
     console.log('❌ API_KEY inválida');
     console.log('🔐 API_KEY esperada:', process.env.API_KEY);
     console.log('🔐 API_KEY recibida:', req.headers['x-api-key']);
-    
+
     return res.status(403).json({ error: 'API_KEY inválida' });
   }
 
@@ -337,11 +337,14 @@ app.get('/api/token/status', async (req, res) => {
   if (tiempo_restante < 60 * 1000) estado = 'por_expirar';
   if (tiempo_restante <= 0) estado = 'expirado';
 
+  const semaforo = tiempo_restante < 5 ? '🔴' : tiempo_restante < 30 ? '🟡' : '🟢';
+
   res.json({
     estado,
     tiempo_restante,
     scopes: token.scope?.split(' ') ?? [],
-    usuario: token.user_id ?? null
+    usuario: token.user_id ?? null,
+    semaforo
   });
 });
 
