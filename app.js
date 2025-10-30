@@ -298,6 +298,7 @@ app.get('/api/token', async (req, res) => {
 
   if (apiKey !== process.env.API_KEY) {
     console.log('❌ API_KEY inválida');
+    console.log('🔐 API_KEY esperada:', process.env.API_KEY);
     return res.status(403).json({ error: 'API_KEY inválida' });
   }
 
