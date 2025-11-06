@@ -312,41 +312,68 @@ app.get('/api/token', async (req, res) => {
       return res.status(404).json({ error: 'Token no disponible' });
     }
 
-    res.json({ token: token.access_token });
+    res.json({
+      access_token: token.access_token,
+      expires_at: token.expires_at,
+      scope: token.scope,
+      user_id: token.user_id
+    });
+
+
   } catch (err) {
     console.error('❌ Error en /api/token:', err);
     res.status(500).json({ error: 'Error interno al obtener el token' });
   }
 });
 
-app.get('/api/token/status', async (req, res) => {
-  const token = await getToken();
-  console.log('📦 Token en /status:', token);
-  if (!token || !token.access_token || !token.expires_at) {
+app.get('/api/token/status', (req, res) => {
+  const token = obtenerTokenDesdeMemoria(); // o desde archivo/db
+
+  if (!token) {
     return res.json({
       estado: 'no_disponible',
       tiempo_restante: 0,
       scopes: [],
-      usuario: null
+      usuario: null,
+      semaforo: '🔴'
     });
   }
 
-  const tiempo_restante = new Date(token.expires_at).getTime() - Date.now();
+  try {
+    const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64'));
+    const exp = new Date(payload.exp * 1000);
+    const ahora = new Date();
+    const tiempo_restante = Math.floor((exp - ahora) / 60000);
 
-  let estado = 'valido';
-  if (tiempo_restante < 60 * 1000) estado = 'por_expirar';
-  if (tiempo_restante <= 0) estado = 'expirado';
+    const estado =
+      tiempo_restante <= 0 ? 'expirado' :
+      tiempo_restante < 5 ? 'por_expirar' :
+      'activo';
 
-  const semaforo = tiempo_restante < 5 ? '🔴' : tiempo_restante < 30 ? '🟡' : '🟢';
+    const semaforo =
+      tiempo_restante <= 0 ? '🔴' :
+      tiempo_restante < 30 ? '🟡' :
+      '🟢';
 
-  res.json({
-    estado,
-    tiempo_restante,
-    scopes: token.scope?.split(' ') ?? [],
-    usuario: token.user_id ?? null,
-    semaforo
-  });
+    res.json({
+      estado,
+      tiempo_restante,
+      scopes: payload.scope?.split(' ') ?? [],
+      usuario: payload.user_id ?? null,
+      semaforo
+    });
+  } catch (err) {
+    console.error('⚠️ Error al decodificar token:', err.message);
+    res.json({
+      estado: 'error',
+      tiempo_restante: 0,
+      scopes: [],
+      usuario: null,
+      semaforo: '🔴'
+    });
+  }
 });
+
 
 
 // Iniciar servidor
