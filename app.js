@@ -292,24 +292,18 @@ app.get('/terms', (req, res) => {
 // versión protegida ENDPOINT
 
 app.get('/api/token', async (req, res) => {
-  console.log('🔐 Request recibido en /api/token');
   const apiKey = req.headers['x-api-key'];
-  console.log('🔑 API_KEY recibida:', apiKey);
-
   if (apiKey !== process.env.API_KEY) {
-    console.log('❌ API_KEY inválida');
-    console.log('🔐 API_KEY esperada:', process.env.API_KEY);
-    console.log('🔐 API_KEY recibida:', req.headers['x-api-key']);
-
     return res.status(403).json({ error: 'API_KEY inválida' });
   }
 
   try {
-    const token = await getToken(); // asegurate que sea async
-    console.log('🔐 Token obtenido:', token);
+    const token = await getToken();
+    console.log('🔍 Token retornado por getToken():', token);
 
     if (!token || !token.access_token) {
-      return res.status(404).json({ error: 'Token no disponible' });
+      console.log('⚠️ Token no disponible');
+      return res.status(404).send('Extraviado');
     }
 
     res.json({
@@ -318,13 +312,12 @@ app.get('/api/token', async (req, res) => {
       scope: token.scope,
       user_id: token.user_id
     });
-
-
   } catch (err) {
-    console.error('❌ Error en /api/token:', err);
+    console.error('❌ Error interno al obtener el token:', err);
     res.status(500).json({ error: 'Error interno al obtener el token' });
   }
 });
+
 
 app.get('/api/token/status', (req, res) => {
   const token = obtenerTokenDesdeMemoria(); // o desde archivo/db
